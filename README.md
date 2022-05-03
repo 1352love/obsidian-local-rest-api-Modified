@@ -16,3 +16,5 @@ This is particularly useful if you need to interact with Obsidian from a browser
 ## Credits
 
 This was inspired by [Vinzent03](https://github.com/Vinzent03)'s [advanced-uri plugin](https://github.com/Vinzent03/obsidian-advanced-uri) with hopes of expanding the automation options beyond the limitations of custom URL schemes.
+
+修改版本
