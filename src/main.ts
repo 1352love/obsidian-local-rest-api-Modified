@@ -22,7 +22,9 @@ export default class LocalRestApi extends Plugin {
       this.settings
     );
     this.requestHandler.setupRouter();
-
+    // let syncitem = this.addStatusBarItem();
+    // syncitem.createEl("span",{text:"⏳Sync.."});
+    // syncitem.style.display = "none";
     this.app;
 
     if (this.settings.crypto && this.settings.crypto.resetOnNextLoad) {
@@ -291,5 +293,6 @@ class LocalRestApiSettingTab extends PluginSettingTab {
         })
         .setValue(this.plugin.settings.crypto.privateKey)
     );
+
   }
 }

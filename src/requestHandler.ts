@@ -6,6 +6,7 @@ import {
   PluginManifest,
   prepareSimpleSearch,
   CachedMetadata,
+  parseFrontMatterEntry,
 } from "obsidian";
 import periodicNotes from "obsidian-daily-notes-interface";
 
@@ -18,7 +19,6 @@ import jsonLogic from "json-logic-js";
 import responseTime from "response-time";
 import queryString from "query-string";
 import WildcardRegexp from "glob-to-regexp";
-
 import {
   ErrorCode,
   CannedResponse,
@@ -29,6 +29,7 @@ import {
   SearchContext,
   SearchJsonResponseItem,
   FileMetadataObject,
+  SearchUidResponseItem,
 } from "./types";
 import { findHeadingBoundary } from "./utils";
 import { CERT_NAME, ContentTypes, ERROR_CODE_MESSAGES } from "./constants";
@@ -676,7 +677,7 @@ export default class RequestHandler {
     this.returnCannedResponse(res, { statusCode: 204 });
     return;
   }
-
+  /** 试试 */
   async searchSimplePost(
     req: express.Request,
     res: express.Response
@@ -716,6 +717,38 @@ export default class RequestHandler {
 
     results.sort((a, b) => (a.score > b.score ? 1 : -1));
     res.json(results);
+  }
+
+  async searchUidPost(
+    req: express.Request,
+    res: express.Response
+  ): Promise<void> {
+
+    const result: SearchUidResponseItem = { path: "" };
+    const uidFieldName: string = req.query.uidfieldname as string;
+    const query: string = req.query.query as string;
+
+    const resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
+    if (resUid != undefined) {
+      let outputPath = this.app.vault.adapter.basePath + "\\" + resUid.replaceAll("/", "\\");
+      result.path = outputPath;
+    } else {
+      result.path = "";
+    }
+    res.json(result);
+
+  }
+  getFileFromUID(uid: string, key: string): TFile | undefined {
+    const files = this.app.vault.getFiles();
+    const idKey = key;
+    var temp = files.find(file => parseFrontMatterEntry(this.app.metadataCache.getFileCache(file)?.frontmatter, idKey) == uid);
+
+    //return files.find(file => parseFrontMatterEntry(this.app.metadataCache.getFileCache(file)?.frontmatter, idKey) == uid);
+    return temp;
+  }
+  pad(num: string, size: number) {
+    var s = "000000000" + num;
+    return s.substr(s.length - size);
   }
 
   async searchGuiPost(
@@ -917,6 +950,7 @@ export default class RequestHandler {
 
     this.api.route("/search/").post(this.searchQueryPost.bind(this));
     this.api.route("/search/simple/").post(this.searchSimplePost.bind(this));
+    this.api.route("/search/uid/").post(this.searchUidPost.bind(this));
     this.api.route("/search/gui/").post(this.searchGuiPost.bind(this));
 
     this.api.route("/open/*").post(this.openPost.bind(this));

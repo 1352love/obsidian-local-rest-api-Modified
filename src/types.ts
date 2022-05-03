@@ -28,6 +28,7 @@ export interface LocalRestApiSettings {
   port: number;
   insecurePort: number;
   enableInsecureServer: boolean;
+
 }
 
 export interface HeadingBoundary {
@@ -139,4 +140,8 @@ export interface FileMetadataObject {
   stat: FileStats;
   path: string;
   content: string;
+}
+
+export interface SearchUidResponseItem {
+  path: string;
 }
