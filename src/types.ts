@@ -15,6 +15,8 @@ export enum ErrorCode {
   PeriodDoesNotExist = 40460,
   PeriodicNoteDoesNotExist = 40461,
   RequestMethodValidOnlyForFiles = 40510,
+  OperateTimeOut = 40520,
+  UncategorizedError = 50000,
 }
 
 export interface LocalRestApiSettings {
@@ -28,7 +30,8 @@ export interface LocalRestApiSettings {
   port: number;
   insecurePort: number;
   enableInsecureServer: boolean;
-
+  StatusBarItemDisplay: string;
+  O2SInputPath: string;
 }
 
 export interface HeadingBoundary {
@@ -102,6 +105,7 @@ declare module "obsidian" {
   interface View {
     file: TFile;
   }
+
 }
 
 export interface ErrorResponseDescriptor {

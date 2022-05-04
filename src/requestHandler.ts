@@ -7,6 +7,7 @@ import {
   prepareSimpleSearch,
   CachedMetadata,
   parseFrontMatterEntry,
+  Notice,
 } from "obsidian";
 import periodicNotes from "obsidian-daily-notes-interface";
 
@@ -33,6 +34,8 @@ import {
 } from "./types";
 import { findHeadingBoundary } from "./utils";
 import { CERT_NAME, ContentTypes, ERROR_CODE_MESSAGES } from "./constants";
+import { InputTitlePrompt } from "./main";
+import { md } from "node-forge";
 
 export default class RequestHandler {
   app: App;
@@ -724,19 +727,154 @@ export default class RequestHandler {
     res: express.Response
   ): Promise<void> {
 
-    const result: SearchUidResponseItem = { path: "" };
-    const uidFieldName: string = req.query.uidfieldname as string;
-    const query: string = req.query.query as string;
+    this.settings.StatusBarItemDisplay = "block";
 
+
+    const uidFieldName: string = req.query.uidfieldname as string;
+    const query: string = req.query.query as string;//要查询的元素id 等于 editedEleID
+    const field_domain: number = parseInt(req.query.field_domain as string, 10)
+    const toMdFolderPath: string = req.query.tomdfolderpath as string;//SM2OBFolderPath
+    //decodeURIComponent
+    const SMQAdelimiter: string = req.query.smqadelimiter as string;//QA 之间的分割符号
     const resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
     if (resUid != undefined) {
-      let outputPath = this.app.vault.adapter.basePath + "\\" + resUid.replaceAll("/", "\\");
-      result.path = outputPath;
-    } else {
-      result.path = "";
-    }
-    res.json(result);
+      //let outputPath = this.app.vault.adapter.basePath + "\\" + resUid.replaceAll("/", "\\");
+      let outputPath = resUid;
+      //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
+      await this.persistentMd(this.settings.O2SInputPath, outputPath, field_domain, SMQAdelimiter, res);
+      this.settings.StatusBarItemDisplay = "none";
+    } else {//根据uid 没有查询到文件
+      //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
+      let prompt = new InputTitlePrompt(this.app, async (result) => {
 
+        new Notice(`你输入的标题为, ${result}!`);
+        await this.createPersistentMd(this.settings.O2SInputPath, field_domain, toMdFolderPath, SMQAdelimiter, query, uidFieldName, result, res);
+        this.settings.StatusBarItemDisplay = "none";
+      });
+
+      let timeout = window.setTimeout(() => this.operationTimeOut(prompt, timeout, res), 10000)
+      prompt.setTimeOutNum(timeout);
+      prompt.open();
+
+
+    }
+
+
+
+
+
+  }
+  /**
+   * 
+   * @param workspacetempmd 临时的md文件地址 
+   * @param field_domain 字字段的序列 或者说是下标
+   * @param toMdFolderPath SM2OBFolderPath 持久化后的md文件夹路径
+   * @param SMQAdelimiter QA之间的分割符号
+   * @param editedEleID 当前被编辑的元素id
+   * @param uidFieldName uid 字段名称 表示唯一身份的字段名称
+   * @param mdtitle md文档的title
+   */
+  async createPersistentMd(workspacetempmd: string, field_domain: number, toMdFolderPath: string, SMQAdelimiter: string, editedEleID: string, uidFieldName: string, mdtitle: string, res: express.Response): Promise<void> {
+    //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
+    const result: SearchUidResponseItem = { path: "" };
+    try {
+      let fileContents = "";
+      let qalist = new Array(2).fill('');
+
+      let yaml_txt = "---\n" + uidFieldName + ": " + this.pad(editedEleID, 8) + "\n---\n";
+
+
+      // const file = this.app.vault.getAbstractFileByPath(workspacetempmd) as TFile;
+      // if (file instanceof TFile) {
+      //   fileContents = await this.app.vault.read(file);
+      // }
+      fileContents = await this.app.vault.adapter.read(workspacetempmd);
+      qalist[field_domain] = fileContents;
+
+      let md_txt = yaml_txt + "\n" + qalist[0].trim() + "\n\n" + SMQAdelimiter + "\n\n" + qalist[1].trim();
+      await this.app.vault.create((toMdFolderPath.endsWith("\\") ? toMdFolderPath + mdtitle + ".md" : toMdFolderPath + "\\" + mdtitle + ".md"), md_txt);
+      result.path = "success";
+      res.json(result);
+    } catch (error) {
+      new Notice("error!createPersistentMd失败\n:" + error);
+      this.returnCannedResponse(res, {
+        errorCode: ErrorCode.UncategorizedError,
+        message: "错误-createPersistentMd:" + error,
+
+      });
+    }
+
+
+  }
+  /**
+   * 
+   * @param workspacetempmd 临时的md文件地址 
+   * @param persimd 持久化md 后的md地址
+   * @param field_domain 字字段的序列 或者说是下标
+   * @param SMQAdelimiter QA之间的分割符号
+   * @param editedEleID 当前被编辑的元素id
+   */
+  async persistentMd(workspacetempmd: string, persimd: string, field_domain: number, SMQAdelimiter: string, res: express.Response): Promise<void> {
+    //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
+    const result: SearchUidResponseItem = { path: "" };
+    try {
+
+      let md_txt = "";
+      let yaml_txt = "";
+      let temp_md_txt = "";
+      let qalist = new Array(2).fill('');
+      // const file = this.app.vault.getAbstractFileByPath(persimd) as TFile;
+      // if (file instanceof TFile) {
+      //   md_txt = await this.app.vault.read(file);
+      // }
+      md_txt = await this.app.vault.adapter.read(persimd);
+      if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
+        yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
+        yaml_txt = yaml_txt.trim();
+        yaml_txt = "---" + "\n" + yaml_txt + "\n---\n"
+      }
+
+      // const file2 = this.app.vault.getAbstractFileByPath(workspacetempmd) as TFile;
+      // if (file2 instanceof TFile) {
+      //   temp_md_txt = await this.app.vault.read(file2);
+      // }
+
+      temp_md_txt = await this.app.vault.adapter.read(workspacetempmd);
+
+      md_txt = md_txt.replace(/^(---)(.|\s)*?(---)/, "");
+      md_txt = md_txt.trim();
+      qalist = md_txt.split(SMQAdelimiter);
+      qalist[field_domain] = temp_md_txt;
+      md_txt = yaml_txt + "\n" + qalist[0].trim() + "\n\n" + SMQAdelimiter + "\n\n" + qalist[1].trim();
+      await this.app.vault.adapter.write(persimd, md_txt);
+      result.path = "success";
+      res.json(result);
+
+    } catch (error) {
+      new Notice("error!PersistentMd失败\n:" + error);
+      this.returnCannedResponse(res, {
+        errorCode: ErrorCode.UncategorizedError,
+        message: "错误-persistentMd:" + error,
+
+      });
+    }
+
+
+  }
+  operationTimeOut(temp: InputTitlePrompt, timeout: number, res: express.Response) {
+    // const result: SearchUidResponseItem = { path: "" };
+    // result.path = "\\error!,operatortimeout";
+    temp.close();
+    console.log("输入markdown标题操作超时");
+    window.clearTimeout(timeout);
+    new Notice("输入markdown标题操作超时");
+    this.returnCannedResponse(res, {
+      errorCode: ErrorCode.OperateTimeOut,
+      message: "输入markdown标题操作超时",
+
+    });
+    this.settings.StatusBarItemDisplay = "none";
+    // res.json(result);
   }
   getFileFromUID(uid: string, key: string): TFile | undefined {
     const files = this.app.vault.getFiles();
@@ -962,3 +1100,6 @@ export default class RequestHandler {
     this.api.use(this.errorHandler.bind(this));
   }
 }
+
+
+

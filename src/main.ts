@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Modal } from "obsidian";
 import * as https from "https";
 import * as http from "http";
 import forge, { pki } from "node-forge";
@@ -22,9 +22,15 @@ export default class LocalRestApi extends Plugin {
       this.settings
     );
     this.requestHandler.setupRouter();
-    // let syncitem = this.addStatusBarItem();
-    // syncitem.createEl("span",{text:"⏳Sync.."});
-    // syncitem.style.display = "none";
+    let syncitem = this.addStatusBarItem();
+
+    syncitem.createEl("span", { text: "⏳Sync..." });
+    this.settings.StatusBarItemDisplay = "none";
+    this.registerInterval(
+      window.setInterval(() => this.updateStatusBar(syncitem), 1000)
+    );
+
+    //syncitem.style.display = this.settings.StatusBarItemDisplay;
     this.app;
 
     if (this.settings.crypto && this.settings.crypto.resetOnNextLoad) {
@@ -110,7 +116,9 @@ export default class LocalRestApi extends Plugin {
 
     this.refreshServerState();
   }
-
+  updateStatusBar(syncitem: HTMLElement) {
+    syncitem.style.display = this.settings.StatusBarItemDisplay;
+  }
   refreshServerState() {
     if (this.secureServer) {
       this.secureServer.close();
@@ -294,5 +302,74 @@ class LocalRestApiSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.crypto.privateKey)
     );
 
+    new Setting(containerEl).setName("workpace md(temp md) path").addTextArea((cb) =>
+      cb
+        .onChange((value) => {
+          this.plugin.settings.O2SInputPath = value;
+          this.plugin.saveSettings();
+        })
+        .setValue(this.plugin.settings.O2SInputPath)
+    );
+
+
   }
 }
+
+
+export class InputTitlePrompt extends Modal {
+  result: string;
+  onSubmit: (result: string) => void;
+  timeoutnumber: number;
+  constructor(app: App, onSubmit: (result: string) => void) {
+    super(app);
+    this.onSubmit = onSubmit;
+
+  }
+  setTimeOutNum(num: number) {
+    this.timeoutnumber = num;
+
+  }
+  onOpen() {
+    const { contentEl } = this;
+
+    contentEl.createEl("h2", { text: "请输入将要保存的markdown标题,建议和SM元素标题一致" });
+
+    new Setting(contentEl)
+      .setName("Title")
+      .addText((text) =>
+        text.onChange((value) => {
+          this.result = value
+        }));
+
+    //let operatimeout = window.setTimeout(() => this.opertiontimeout(), 10000);
+    new Setting(contentEl)
+      .addButton((btn) =>
+        btn
+          .setButtonText("Submit")
+          .setCta()
+          .onClick(() => {
+            this.close();
+            this.onSubmit(this.result);
+            //window.clearTimeout(operatimeout);
+            window.clearTimeout(this.timeoutnumber);
+          }));
+
+
+
+
+
+
+  }
+
+  onClose() {
+    let { contentEl } = this;
+    contentEl.empty();
+
+  }
+
+  opertiontimeout() {
+    this.close()
+    console.log("超时后的操作")
+  }
+}
+
