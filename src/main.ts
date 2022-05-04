@@ -332,7 +332,7 @@ export class InputTitlePrompt extends Modal {
   onOpen() {
     const { contentEl } = this;
 
-    contentEl.createEl("h2", { text: "请输入将要保存的markdown标题,建议和SM元素标题一致" });
+    contentEl.createEl("h2", { text: "markdown标题" });
 
     new Setting(contentEl)
       .setName("Title")
