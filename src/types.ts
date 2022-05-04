@@ -32,6 +32,8 @@ export interface LocalRestApiSettings {
   enableInsecureServer: boolean;
   StatusBarItemDisplay: string;
   O2SInputPath: string;
+  qkIniPath: string;
+  double_chain_reference_actionId: string;
 }
 
 export interface HeadingBoundary {

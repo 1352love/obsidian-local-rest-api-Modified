@@ -741,18 +741,18 @@ export default class RequestHandler {
       //let outputPath = this.app.vault.adapter.basePath + "\\" + resUid.replaceAll("/", "\\");
       let outputPath = resUid;
       //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
-      await this.persistentMd(this.settings.O2SInputPath, outputPath, field_domain, SMQAdelimiter, res);
+      await this.persistentMd(this.settings.O2SInputPath, outputPath, field_domain, SMQAdelimiter, true, res);
       this.settings.StatusBarItemDisplay = "none";
     } else {//根据uid 没有查询到文件
       //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
       let prompt = new InputTitlePrompt(this.app, async (result) => {
 
         new Notice(`你输入的标题为, ${result}!`);
-        await this.createPersistentMd(this.settings.O2SInputPath, field_domain, toMdFolderPath, SMQAdelimiter, query, uidFieldName, result, res);
+        await this.createPersistentMd(this.settings.O2SInputPath, field_domain, toMdFolderPath, SMQAdelimiter, query, uidFieldName, result, true, res);
         this.settings.StatusBarItemDisplay = "none";
       });
 
-      let timeout = window.setTimeout(() => this.operationTimeOut(prompt, timeout, res), 15000)
+      let timeout = window.setTimeout(() => this.operationTimeOut(prompt, timeout, true, res), 15000)
       prompt.setTimeOutNum(timeout);
       prompt.open();
 
@@ -774,7 +774,7 @@ export default class RequestHandler {
    * @param uidFieldName uid 字段名称 表示唯一身份的字段名称
    * @param mdtitle md文档的title
    */
-  async createPersistentMd(workspacetempmd: string, field_domain: number, toMdFolderPath: string, SMQAdelimiter: string, editedEleID: string, uidFieldName: string, mdtitle: string, res: express.Response): Promise<void> {
+  async createPersistentMd(workspacetempmd: string, field_domain: number, toMdFolderPath: string, SMQAdelimiter: string, editedEleID: string, uidFieldName: string, mdtitle: string, mode: boolean, res?: express.Response): Promise<void> {
     //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
     const result: SearchUidResponseItem = { path: "" };
     try {
@@ -793,15 +793,24 @@ export default class RequestHandler {
 
       let md_txt = yaml_txt + "\n" + qalist[0].trim() + "\n\n" + SMQAdelimiter + "\n\n" + qalist[1].trim();
       await this.app.vault.create((toMdFolderPath.endsWith("\\") ? toMdFolderPath + mdtitle + ".md" : toMdFolderPath + "\\" + mdtitle + ".md"), md_txt);
-      result.path = "success";
-      res.json(result);
+      if (mode) {
+        result.path = "success";
+        res.json(result);
+      } else {
+        window.open("quicker:runaction:" + this.settings.double_chain_reference_actionId + "?manualSync");
+      }
+
     } catch (error) {
       new Notice("error!createPersistentMd失败\n:" + error);
-      this.returnCannedResponse(res, {
-        errorCode: ErrorCode.UncategorizedError,
-        message: "错误-createPersistentMd:" + error,
 
-      });
+      if (mode) {
+        this.returnCannedResponse(res, {
+          errorCode: ErrorCode.UncategorizedError,
+          message: "错误-createPersistentMd:" + error,
+
+        });
+      }
+
     }
 
 
@@ -814,7 +823,7 @@ export default class RequestHandler {
    * @param SMQAdelimiter QA之间的分割符号
    * @param editedEleID 当前被编辑的元素id
    */
-  async persistentMd(workspacetempmd: string, persimd: string, field_domain: number, SMQAdelimiter: string, res: express.Response): Promise<void> {
+  async persistentMd(workspacetempmd: string, persimd: string, field_domain: number, SMQAdelimiter: string, mode: boolean, res?: express.Response): Promise<void> {
     //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
     const result: SearchUidResponseItem = { path: "" };
     try {
@@ -847,32 +856,45 @@ export default class RequestHandler {
       qalist[field_domain] = temp_md_txt;
       md_txt = yaml_txt + "\n" + qalist[0].trim() + "\n\n" + SMQAdelimiter + "\n\n" + qalist[1].trim();
       await this.app.vault.adapter.write(persimd, md_txt);
-      result.path = "success";
-      res.json(result);
+
+
+      if (mode) {
+        result.path = "success";
+        res.json(result);
+      } else {
+        window.open("quicker:runaction:" + this.settings.double_chain_reference_actionId + "?manualSync");
+      }
+
 
     } catch (error) {
       new Notice("error!PersistentMd失败\n:" + error);
-      this.returnCannedResponse(res, {
-        errorCode: ErrorCode.UncategorizedError,
-        message: "错误-persistentMd:" + error,
+      if (mode) {
+        this.returnCannedResponse(res, {
+          errorCode: ErrorCode.UncategorizedError,
+          message: "错误-persistentMd:" + error,
 
-      });
+        });
+      }
+
     }
 
 
   }
-  operationTimeOut(temp: InputTitlePrompt, timeout: number, res: express.Response) {
+  operationTimeOut(temp: InputTitlePrompt, timeout: number, mode: boolean, res?: express.Response) {
     // const result: SearchUidResponseItem = { path: "" };
     // result.path = "\\error!,operatortimeout";
     temp.close();
     console.log("输入markdown标题操作超时");
     window.clearTimeout(timeout);
     new Notice("输入markdown标题操作超时");
-    this.returnCannedResponse(res, {
-      errorCode: ErrorCode.OperateTimeOut,
-      message: "输入markdown标题操作超时",
+    if (mode) {
+      this.returnCannedResponse(res, {
+        errorCode: ErrorCode.OperateTimeOut,
+        message: "输入markdown标题操作超时",
 
-    });
+      });
+    }
+
     this.settings.StatusBarItemDisplay = "none";
     // res.json(result);
   }

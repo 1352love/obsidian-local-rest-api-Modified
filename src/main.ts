@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, Modal } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Modal, addIcon, Notice } from "obsidian";
 import * as https from "https";
 import * as http from "http";
 import forge, { pki } from "node-forge";
@@ -7,6 +7,12 @@ import RequestHandler from "./requestHandler";
 import { LocalRestApiSettings } from "./types";
 
 import { CERT_NAME, DEFAULT_SETTINGS, HOSTNAME } from "./constants";
+
+import fs from "fs";
+//import supermemo18Icon from "./assets/supermemo18.svg"
+
+
+
 
 export default class LocalRestApi extends Plugin {
   settings: LocalRestApiSettings;
@@ -31,8 +37,24 @@ export default class LocalRestApi extends Plugin {
     );
 
     //syncitem.style.display = this.settings.StatusBarItemDisplay;
+    // addIcon('supermemo18Icon', 'svg viewBox="0 0 100 100"><path d="M15.654 37.218l21.998 -0.917c0.356' +
+    //   '1.503 1.472 2.71 2.922 3.188l2.798 27.568 -28.033 -29.115c0.128 -0.228 0.234-0.471 0');
+    this.addRibbonIcon('sync', 'Sync your markdown to supermemo18', async () => {
+      console.log("开始同步");
+      await this.manualSync();
+    });
+
     this.app;
 
+    this.addCommand({
+      id: 'sync-yourmd-supermemo',
+      name: '同步你的markdown到supermemo18',
+      callback: async () => {
+        new Notice("开始同步");
+        await this.manualSync();
+      }
+
+    });
     if (this.settings.crypto && this.settings.crypto.resetOnNextLoad) {
       delete this.settings.apiKey;
       delete this.settings.crypto;
@@ -119,6 +141,58 @@ export default class LocalRestApi extends Plugin {
   updateStatusBar(syncitem: HTMLElement) {
     syncitem.style.display = this.settings.StatusBarItemDisplay;
   }
+
+
+  async manualSync() {
+
+    let configTxt: string = fs.readFileSync(this.settings.qkIniPath, { encoding: 'utf8' });
+    console.log(configTxt);
+
+    const editedId = this.requestHandler.pad(configTxt.match(/editedEleId ?= ?(.+)/)[1], 8);//要查询的元素id 等于 editedEleID
+    console.log(this.requestHandler.pad(configTxt.match(/editedEleId ?= ?(.+)/)[1], 8));
+    const uidFieldName: string = configTxt.match(/mdUIDFieldName ?= ?(.+)/)[1];
+
+    const field_domain: number = parseInt(configTxt.match(/field_domain ?= ?(.+)/)[1], 10);
+    const toMdFolderPath: string = configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1];//SM2OBFolderPath
+    //decodeURIComponent
+    const SMQAdelimiter: string = configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];//QA 之间的分割符号
+    const SMEleType: string = configTxt.match(/SMEleType ?= ?(.+)/)[1];//元素类型
+    const SMEditProIsRunning: boolean = configTxt.match(/SMEditProIsRunning ?= ?(.+)/)[1] === 'true' ? true : false;
+    const resUid = this.requestHandler.getFileFromUID(this.requestHandler.pad(editedId, 8), uidFieldName)?.path;
+    if (!SMEditProIsRunning) {
+      //命令在quicker 动作 SMEditorPro 没有打开的情况下不能使用
+      new Notice("Error,quicker SMEditorPro 动作没有执行，同步不能单独使用");
+    } else if (!(SMEleType === 'Item')) {//当前要同步的元素不是item
+      window.open("quicker:runaction:" + this.settings.double_chain_reference_actionId + "?manualSync");
+      new Notice("warning!,当前元素为非item类型，因此仅仅同步内容到SM，并没有生成md");
+
+    } else {
+      if (resUid != undefined) {
+        //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
+        let outputPath = resUid;
+        await this.requestHandler.persistentMd(this.settings.O2SInputPath, outputPath, field_domain, SMQAdelimiter, false);
+      } else {
+        //根据uid 没有查询到文件
+        //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
+        let prompt = new InputTitlePrompt(this.app, async (result) => {
+
+          new Notice(`你输入的标题为, ${result}!`);
+          await this.requestHandler.createPersistentMd(this.settings.O2SInputPath, field_domain, toMdFolderPath, SMQAdelimiter, query, uidFieldName, result, true, res);
+          this.settings.StatusBarItemDisplay = "none";
+        });
+
+        let timeout = window.setTimeout(() => this.requestHandler.operationTimeOut(prompt, timeout, true, res), 15000)
+        prompt.setTimeOutNum(timeout);
+        prompt.open();
+
+      }
+
+    }
+
+  }
+
+
+
   refreshServerState() {
     if (this.secureServer) {
       this.secureServer.close();
@@ -302,6 +376,18 @@ class LocalRestApiSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.crypto.privateKey)
     );
 
+    containerEl.createEl("hr");
+    containerEl.createEl("h3", {
+      text: "SMEditor相关设置",
+    });
+
+    new Setting(containerEl)
+      .setName("SMEditorPro action config path")
+      .addTextArea(cb => cb.onChange(value => {
+        this.plugin.settings.qkIniPath = value;
+        this.plugin.saveSettings();
+      }).setValue(this.plugin.settings.qkIniPath));
+
     new Setting(containerEl).setName("workpace md(temp md) path").addTextArea((cb) =>
       cb
         .onChange((value) => {
@@ -309,6 +395,14 @@ class LocalRestApiSettingTab extends PluginSettingTab {
           this.plugin.saveSettings();
         })
         .setValue(this.plugin.settings.O2SInputPath)
+    );
+    new Setting(containerEl).setName("SMEditorPro双链引用保存动作id").addTextArea((cb) =>
+      cb
+        .onChange((value) => {
+          this.plugin.settings.double_chain_reference_actionId = value;
+          this.plugin.saveSettings();
+        })
+        .setValue(this.plugin.settings.double_chain_reference_actionId)
     );
 
 
