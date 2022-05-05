@@ -29,6 +29,15 @@ export default class LocalRestApi extends Plugin {
     );
     this.requestHandler.setupRouter();
     let syncitem = this.addStatusBarItem();
+    let configTxt: string = fs.readFileSync(this.settings.qkIniPath, { encoding: 'utf8' });
+    let vualtPath = this.app.vault.adapter.basePath + "\\";
+    this.settings.uidFieldName = configTxt.match(/mdUIDFieldName ?= ?(.+)/) == null ? DEFAULT_SETTINGS.uidFieldName : configTxt.match(/mdUIDFieldName ?= ?(.+)/)[1];
+    this.settings.toMdFolderPath = configTxt.match(/SM2OBFolderPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.toMdFolderPath : (configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1]).replace(vualtPath, "");
+    this.settings.SMQAdelimiter = configTxt.match(/SMQAdelimiter ?= ?(.+)/) == null ? DEFAULT_SETTINGS.SMQAdelimiter : configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];
+    this.settings.titleInTimeout = configTxt.match(/titleInTimeout ?= ?(.+)/) == null ? DEFAULT_SETTINGS.titleInTimeout : parseInt(configTxt.match(/titleInTimeout ?= ?(.+)/)[1]);
+    this.settings.O2SInputPath = configTxt.match(/O2SInputPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.O2SInputPath : (configTxt.match(/O2SInputPath ?= ?(.+)/)[1]).replace(vualtPath, "");
+    await this.saveData(this.settings);
+
 
     syncitem.createEl("span", { text: "⏳Sync..." });
     this.settings.StatusBarItemDisplay = "none";
@@ -148,14 +157,20 @@ export default class LocalRestApi extends Plugin {
     let configTxt: string = fs.readFileSync(this.settings.qkIniPath, { encoding: 'utf8' });
     console.log(configTxt);
 
-    const editedId = this.requestHandler.pad(configTxt.match(/editedEleId ?= ?(.+)/)[1], 8);//要查询的元素id 等于 editedEleID
     console.log(this.requestHandler.pad(configTxt.match(/editedEleId ?= ?(.+)/)[1], 8));
-    const uidFieldName: string = configTxt.match(/mdUIDFieldName ?= ?(.+)/)[1];
+    // const uidFieldName: string = configTxt.match(/mdUIDFieldName ?= ?(.+)/)[1];
+    // const toMdFolderPath: string = configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1];//SM2OBFolderPath
+    // //decodeURIComponent
+    // const SMQAdelimiter: string = configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];//QA 之间的分割符号
+    const uidFieldName: string = this.settings.uidFieldName;
+    const toMdFolderPath: string = this.settings.toMdFolderPath;
 
-    const field_domain: number = parseInt(configTxt.match(/field_domain ?= ?(.+)/)[1], 10);
-    const toMdFolderPath: string = configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1];//SM2OBFolderPath
     //decodeURIComponent
-    const SMQAdelimiter: string = configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];//QA 之间的分割符号
+    const SMQAdelimiter: string = this.settings.SMQAdelimiter;
+
+
+    const editedId = this.requestHandler.pad(configTxt.match(/editedEleId ?= ?(.+)/)[1], 8);//要查询的元素id 等于 editedEleID 
+    const field_domain: number = parseInt(configTxt.match(/field_domain ?= ?(.+)/)[1], 10);
     const SMEleType: string = configTxt.match(/SMEleType ?= ?(.+)/)[1];//元素类型
     const SMEditProIsRunning: boolean = configTxt.match(/SMEditProIsRunning ?= ?(.+)/)[1] === 'true' ? true : false;
     let resUid: string = "";
@@ -206,11 +221,11 @@ export default class LocalRestApi extends Plugin {
         let prompt = new InputTitlePrompt(this.app, async (result) => {
 
           new Notice(`你输入的标题为, ${result}!`);
-          await this.requestHandler.createPersistentMd(this.settings.O2SInputPath, field_domain, toMdFolderPath, SMQAdelimiter, query, uidFieldName, result, true, res);
+          await this.requestHandler.createPersistentMd(this.settings.O2SInputPath, field_domain, toMdFolderPath, SMQAdelimiter, editedId, uidFieldName, result, false);
           this.settings.StatusBarItemDisplay = "none";
         });
 
-        let timeout = window.setTimeout(() => this.requestHandler.operationTimeOut(prompt, timeout, true, res), 15000)
+        let timeout = window.setTimeout(() => this.requestHandler.operationTimeOut(prompt, timeout, true), 15000)
         prompt.setTimeOutNum(timeout);
         prompt.open();
 
@@ -417,22 +432,23 @@ class LocalRestApiSettingTab extends PluginSettingTab {
         this.plugin.saveSettings();
       }).setValue(this.plugin.settings.qkIniPath));
 
-    new Setting(containerEl).setName("workpace md(temp md) path").addTextArea((cb) =>
-      cb
-        .onChange((value) => {
-          this.plugin.settings.O2SInputPath = value;
-          this.plugin.saveSettings();
-        })
-        .setValue(this.plugin.settings.O2SInputPath)
-    );
-    new Setting(containerEl).setName("SMEditorPro双链引用保存动作id").addTextArea((cb) =>
-      cb
-        .onChange((value) => {
-          this.plugin.settings.double_chain_reference_actionId = value;
-          this.plugin.saveSettings();
-        })
-        .setValue(this.plugin.settings.double_chain_reference_actionId)
-    );
+    // new Setting(containerEl).setName("workpace md(temp md) path").addTextArea((cb) =>
+    //   cb
+    //     .onChange((value) => {
+    //       this.plugin.settings.O2SInputPath = value;
+    //       this.plugin.saveSettings();
+    //     })
+    //     .setValue(this.plugin.settings.O2SInputPath)
+    // );
+    // new Setting(containerEl).setName("SMEditorPro双链引用保存动作id").addTextArea((cb) =>
+    //   cb
+    //     .onChange((value) => {
+    //       this.plugin.settings.double_chain_reference_actionId = value;
+    //       this.plugin.saveSettings();
+    //     })
+    //     .setValue(this.plugin.settings.double_chain_reference_actionId)
+    // );
+
 
 
   }

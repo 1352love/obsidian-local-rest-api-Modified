@@ -35,6 +35,11 @@ export interface LocalRestApiSettings {
   O2SInputPath: string;
   qkIniPath: string;
   double_chain_reference_actionId: string;
+  uidFieldName: string;
+  toMdFolderPath: string;
+  SMQAdelimiter: string;
+  titleInTimeout: number;
+
 }
 
 export interface HeadingBoundary {

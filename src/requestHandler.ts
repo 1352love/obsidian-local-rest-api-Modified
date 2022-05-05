@@ -729,13 +729,21 @@ export default class RequestHandler {
 
     this.settings.StatusBarItemDisplay = "block";
 
+    // v1 to v2
+    // const uidFieldName: string = req.query.uidfieldname as string;
+    // const toMdFolderPath: string = req.query.tomdfolderpath as string;//SM2OBFolderPath
+    // const SMQAdelimiter: string = req.query.smqadelimiter as string;//QA 之间的分割符号
 
-    const uidFieldName: string = req.query.uidfieldname as string;
+    //v2
+    const uidFieldName: string = this.settings.uidFieldName;
+    const toMdFolderPath: string = this.settings.toMdFolderPath;
+    const SMQAdelimiter: string = this.settings.SMQAdelimiter;
+
     const query: string = req.query.query as string;//要查询的元素id 等于 editedEleID
     const field_domain: number = parseInt(req.query.field_domain as string, 10)
-    const toMdFolderPath: string = req.query.tomdfolderpath as string;//SM2OBFolderPath
+
     //decodeURIComponent
-    const SMQAdelimiter: string = req.query.smqadelimiter as string;//QA 之间的分割符号
+
     let resUid: string = "";
 
     try {
