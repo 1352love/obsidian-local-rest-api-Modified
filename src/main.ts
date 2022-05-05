@@ -168,27 +168,31 @@ export default class LocalRestApi extends Plugin {
 
     } else {
 
-
-      if (this.requestHandler.lastSearchUidPath == undefined) {
-        resUid = this.requestHandler.getFileFromUID(editedId, uidFieldName)?.path;
-      } else {
-        let md_txt = await this.app.vault.adapter.read(this.requestHandler.lastSearchUidPath);
-        let yaml_txt = "";
-        var extractIdRegexObj = new RegExp(uidFieldName + ": ?(.+)");
-        let md_id = "";
-        if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
-          yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
-          yaml_txt = yaml_txt.trim();
-          md_id = yaml_txt.match(extractIdRegexObj)[1];
-          if (editedId == md_id) {//匹配lastSearchUidPath 
-            resUid = this.requestHandler.lastSearchUidPath;
-          } else {//不匹配重新查询
-            resUid = this.requestHandler.getFileFromUID(editedId, uidFieldName)?.path;
-
-          }
+      try {
+        if (this.requestHandler.lastSearchUidPath == undefined) {
+          resUid = this.requestHandler.getFileFromUID(editedId, uidFieldName)?.path;
         } else {
-          new Notice("error!" + this.requestHandler.lastSearchUidPath + ": 此markdown中没有Uid字段")
+          let md_txt = await this.app.vault.adapter.read(this.requestHandler.lastSearchUidPath);
+          let yaml_txt = "";
+          var extractIdRegexObj = new RegExp(uidFieldName + ": ?(.+)");
+          let md_id = "";
+          if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
+            yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
+            yaml_txt = yaml_txt.trim();
+            md_id = yaml_txt.match(extractIdRegexObj)[1];
+            if (editedId == md_id) {//匹配lastSearchUidPath 
+              resUid = this.requestHandler.lastSearchUidPath;
+            } else {//不匹配重新查询
+              resUid = this.requestHandler.getFileFromUID(editedId, uidFieldName)?.path;
+
+            }
+          } else {
+            new Notice("error!" + this.requestHandler.lastSearchUidPath + ": 此markdown中没有Uid字段")
+          }
         }
+      } catch (error) {
+        this.requestHandler.lastSearchUidPath = undefined;
+        new Notice("error! " + "this.lastSearchUidPath" + error)
       }
 
 

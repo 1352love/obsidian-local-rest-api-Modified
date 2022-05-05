@@ -737,31 +737,42 @@ export default class RequestHandler {
     //decodeURIComponent
     const SMQAdelimiter: string = req.query.smqadelimiter as string;//QA 之间的分割符号
     let resUid: string = "";
-    if (this.lastSearchUidPath == undefined) {
-      resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
-    } else {
-      let md_txt = await this.app.vault.adapter.read(this.lastSearchUidPath);
-      let yaml_txt = "";
-      var extractIdRegexObj = new RegExp(uidFieldName + ": ?(.+)");
-      let md_id = "";
-      if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
-        yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
-        yaml_txt = yaml_txt.trim();
-        md_id = yaml_txt.match(extractIdRegexObj)[1];
-        if (this.pad(query, 8) == md_id) {//匹配lastSearchUidPath 
-          resUid = this.lastSearchUidPath;
-        } else {//不匹配重新查询
-          resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
 
-        }
+    try {
+      if (this.lastSearchUidPath == undefined) {
+        resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
       } else {
-        new Notice("error!" + this.lastSearchUidPath + ": 此markdown中没有Uid字段")
-        this.returnCannedResponse(res, {
-          errorCode: ErrorCode.NoFindUidField,
-          message: this.lastSearchUidPath + ": 此markdown中没有Uid字段",
+        let md_txt = await this.app.vault.adapter.read(this.lastSearchUidPath);
+        let yaml_txt = "";
+        var extractIdRegexObj = new RegExp(uidFieldName + ": ?(.+)");
+        let md_id = "";
+        if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
+          yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
+          yaml_txt = yaml_txt.trim();
+          md_id = yaml_txt.match(extractIdRegexObj)[1];
+          if (this.pad(query, 8) == md_id) {//匹配lastSearchUidPath 
+            resUid = this.lastSearchUidPath;
+          } else {//不匹配重新查询
+            resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
 
-        });
+          }
+        } else {
+          new Notice("error!" + this.lastSearchUidPath + ": 此markdown中没有Uid字段")
+          this.returnCannedResponse(res, {
+            errorCode: ErrorCode.NoFindUidField,
+            message: this.lastSearchUidPath + ": 此markdown中没有Uid字段",
+
+          });
+        }
       }
+    } catch (error) {
+      this.lastSearchUidPath = undefined;
+      new Notice("error! " + "this.lastSearchUidPath" + error)
+      this.returnCannedResponse(res, {
+        errorCode: ErrorCode.UncategorizedError,
+        message: "error! " + "this.lastSearchUidPath" + error,
+
+      });
     }
 
     if (resUid != undefined) {
