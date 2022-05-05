@@ -788,6 +788,8 @@ export default class RequestHandler {
       // if (file instanceof TFile) {
       //   fileContents = await this.app.vault.read(file);
       // }
+
+      //this.app.workspace.activeLeaf.view.save(); 没有元素对应的md 创建 那一刻 不需要 save()
       fileContents = await this.app.vault.adapter.read(workspacetempmd);
       qalist[field_domain] = fileContents;
 
@@ -836,6 +838,7 @@ export default class RequestHandler {
       // if (file instanceof TFile) {
       //   md_txt = await this.app.vault.read(file);
       // }
+      this.app.workspace.activeLeaf.view.save();
       md_txt = await this.app.vault.adapter.read(persimd);
       if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
         yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
@@ -849,6 +852,11 @@ export default class RequestHandler {
       // }
 
       temp_md_txt = await this.app.vault.adapter.read(workspacetempmd);
+
+      // new Notice("临时工作路径" + workspacetempmd);
+      // new Notice("当前激活模式的文件路径" + this.app.workspace.activeLeaf.view.file.path);
+      // new Notice("激活类型" + this.app.workspace.getActiveViewOfType);
+      // console.log(this.app.workspace.activeLeaf.view.data);
 
       md_txt = md_txt.replace(/^(---)(.|\s)*?(---)/, "");
       md_txt = md_txt.trim();
