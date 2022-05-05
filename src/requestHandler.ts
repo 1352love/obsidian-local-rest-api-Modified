@@ -788,7 +788,7 @@ export default class RequestHandler {
       let outputPath = resUid;
       //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
       await this.persistentMd(this.settings.O2SInputPath, outputPath, field_domain, SMQAdelimiter, true, res);
-      this.settings.StatusBarItemDisplay = "none";
+      window.setTimeout(() => this.settings.StatusBarItemDisplay = "none", 2500);//2.5s 后消失
     } else {//根据uid 没有查询到文件
       //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
       let prompt = new InputTitlePrompt(this.app, async (result) => {

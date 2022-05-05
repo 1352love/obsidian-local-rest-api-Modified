@@ -156,7 +156,7 @@ export default class LocalRestApi extends Plugin {
 
     let configTxt: string = fs.readFileSync(this.settings.qkIniPath, { encoding: 'utf8' });
     console.log(configTxt);
-
+    this.settings.StatusBarItemDisplay = "block";
     console.log(this.requestHandler.pad(configTxt.match(/editedEleId ?= ?(.+)/)[1], 8));
     // const uidFieldName: string = configTxt.match(/mdUIDFieldName ?= ?(.+)/)[1];
     // const toMdFolderPath: string = configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1];//SM2OBFolderPath
@@ -215,6 +215,7 @@ export default class LocalRestApi extends Plugin {
         //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
         let outputPath = resUid;
         await this.requestHandler.persistentMd(this.settings.O2SInputPath, outputPath, field_domain, SMQAdelimiter, false);
+        window.setTimeout(() => this.settings.StatusBarItemDisplay = "none", 2500);
       } else {
         //根据uid 没有查询到文件
         //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 没有md路径
