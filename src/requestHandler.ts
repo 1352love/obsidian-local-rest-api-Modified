@@ -798,7 +798,7 @@ export default class RequestHandler {
         this.settings.StatusBarItemDisplay = "none";
       });
 
-      let timeout = window.setTimeout(() => this.operationTimeOut(prompt, timeout, true, res), 15000)
+      let timeout = window.setTimeout(() => this.operationTimeOut(prompt, timeout, true, res), this.settings.titleInTimeout)
       prompt.setTimeOutNum(timeout);
       prompt.open();
 

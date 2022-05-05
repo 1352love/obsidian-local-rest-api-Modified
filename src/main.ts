@@ -226,7 +226,7 @@ export default class LocalRestApi extends Plugin {
           this.settings.StatusBarItemDisplay = "none";
         });
 
-        let timeout = window.setTimeout(() => this.requestHandler.operationTimeOut(prompt, timeout, true), 15000)
+        let timeout = window.setTimeout(() => this.requestHandler.operationTimeOut(prompt, timeout, true), this.settings.titleInTimeout)
         prompt.setTimeOutNum(timeout);
         prompt.open();
 
