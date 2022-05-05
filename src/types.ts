@@ -17,6 +17,7 @@ export enum ErrorCode {
   RequestMethodValidOnlyForFiles = 40510,
   OperateTimeOut = 40520,
   UncategorizedError = 50000,
+  NoFindUidField = 50530,
 }
 
 export interface LocalRestApiSettings {

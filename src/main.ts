@@ -158,7 +158,7 @@ export default class LocalRestApi extends Plugin {
     const SMQAdelimiter: string = configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];//QA 之间的分割符号
     const SMEleType: string = configTxt.match(/SMEleType ?= ?(.+)/)[1];//元素类型
     const SMEditProIsRunning: boolean = configTxt.match(/SMEditProIsRunning ?= ?(.+)/)[1] === 'true' ? true : false;
-    const resUid = this.requestHandler.getFileFromUID(this.requestHandler.pad(editedId, 8), uidFieldName)?.path;
+    let resUid: string = "";
     if (!SMEditProIsRunning) {
       //命令在quicker 动作 SMEditorPro 没有打开的情况下不能使用
       new Notice("Error,quicker SMEditorPro 动作没有执行，同步不能单独使用");
@@ -167,6 +167,31 @@ export default class LocalRestApi extends Plugin {
       new Notice("warning!,当前元素为非item类型，因此仅仅同步内容到SM，并没有生成md");
 
     } else {
+
+
+      if (this.requestHandler.lastSearchUidPath == undefined) {
+        resUid = this.requestHandler.getFileFromUID(editedId, uidFieldName)?.path;
+      } else {
+        let md_txt = await this.app.vault.adapter.read(this.requestHandler.lastSearchUidPath);
+        let yaml_txt = "";
+        var extractIdRegexObj = new RegExp(uidFieldName + ": ?(.+)");
+        let md_id = "";
+        if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
+          yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
+          yaml_txt = yaml_txt.trim();
+          md_id = yaml_txt.match(extractIdRegexObj)[1];
+          if (editedId == md_id) {//匹配lastSearchUidPath 
+            resUid = this.requestHandler.lastSearchUidPath;
+          } else {//不匹配重新查询
+            resUid = this.requestHandler.getFileFromUID(editedId, uidFieldName)?.path;
+
+          }
+        } else {
+          new Notice("error!" + this.requestHandler.lastSearchUidPath + ": 此markdown中没有Uid字段")
+        }
+      }
+
+
       if (resUid != undefined) {
         //相当于原有（SMEditorProPlugin_OB2SM）的子程序更新md内容 有md路径
         let outputPath = resUid;

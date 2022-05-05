@@ -42,7 +42,7 @@ export default class RequestHandler {
   api: express.Express;
   manifest: PluginManifest;
   settings: LocalRestApiSettings;
-
+  lastSearchUidPath: string;
   constructor(
     app: App,
     manifest: PluginManifest,
@@ -736,7 +736,34 @@ export default class RequestHandler {
     const toMdFolderPath: string = req.query.tomdfolderpath as string;//SM2OBFolderPath
     //decodeURIComponent
     const SMQAdelimiter: string = req.query.smqadelimiter as string;//QA 之间的分割符号
-    const resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
+    let resUid: string = "";
+    if (this.lastSearchUidPath == undefined) {
+      resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
+    } else {
+      let md_txt = await this.app.vault.adapter.read(this.lastSearchUidPath);
+      let yaml_txt = "";
+      var extractIdRegexObj = new RegExp(uidFieldName + ": ?(.+)");
+      let md_id = "";
+      if (md_txt.match(/^(---)((.|\s)*?)(---)/) != null) {
+        yaml_txt = md_txt.match(/^(---)((.|\s)*?)(---)/)[2];
+        yaml_txt = yaml_txt.trim();
+        md_id = yaml_txt.match(extractIdRegexObj)[1];
+        if (this.pad(query, 8) == md_id) {//匹配lastSearchUidPath 
+          resUid = this.lastSearchUidPath;
+        } else {//不匹配重新查询
+          resUid = this.getFileFromUID(this.pad(query, 8), uidFieldName)?.path;
+
+        }
+      } else {
+        new Notice("error!" + this.lastSearchUidPath + ": 此markdown中没有Uid字段")
+        this.returnCannedResponse(res, {
+          errorCode: ErrorCode.NoFindUidField,
+          message: this.lastSearchUidPath + ": 此markdown中没有Uid字段",
+
+        });
+      }
+    }
+
     if (resUid != undefined) {
       //let outputPath = this.app.vault.adapter.basePath + "\\" + resUid.replaceAll("/", "\\");
       let outputPath = resUid;
@@ -794,8 +821,10 @@ export default class RequestHandler {
       qalist[field_domain] = fileContents;
 
       let md_txt = yaml_txt + "\n" + qalist[0].trim() + "\n\n" + SMQAdelimiter + "\n\n" + qalist[1].trim();
-      await this.app.vault.create((toMdFolderPath.endsWith("\\") ? toMdFolderPath + mdtitle + ".md" : toMdFolderPath + "\\" + mdtitle + ".md"), md_txt);
+      let tmepfile = await this.app.vault.create((toMdFolderPath.endsWith("\\") ? toMdFolderPath + mdtitle + ".md" : toMdFolderPath + "\\" + mdtitle + ".md"), md_txt);
+
       if (mode) {
+        this.lastSearchUidPath = tmepfile.path;
         result.path = "success";
         res.json(result);
       } else {
@@ -867,6 +896,7 @@ export default class RequestHandler {
 
 
       if (mode) {
+        this.lastSearchUidPath = persimd;
         result.path = "success";
         res.json(result);
       } else {
