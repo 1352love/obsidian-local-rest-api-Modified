@@ -15,7 +15,9 @@ export const DEFAULT_SETTINGS: LocalRestApiSettings = {
   titleInTimeout: 15000,
   StatusBarItemDisplay: "none",
   O2SInputPath: "editing.md",
-  double_chain_reference_actionId: "95fa3d7a-8f25-4167-b03c-c5a7a06d1c6a"
+  double_chain_reference_actionId: "95fa3d7a-8f25-4167-b03c-c5a7a06d1c6a",
+  IsNoticeSync: true,
+  autoUpdateSourceURL: true,
 };
 
 export const ERROR_CODE_MESSAGES: Record<ErrorCode, string> = {

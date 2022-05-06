@@ -39,6 +39,8 @@ export interface LocalRestApiSettings {
   toMdFolderPath: string;
   SMQAdelimiter: string;
   titleInTimeout: number;
+  IsNoticeSync: boolean;
+  autoUpdateSourceURL: boolean;
 
 }
 

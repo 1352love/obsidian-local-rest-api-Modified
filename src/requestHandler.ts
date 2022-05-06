@@ -845,6 +845,9 @@ export default class RequestHandler {
       if (mode) {
         this.lastSearchUidPath = tmepfile.path;
         result.path = "success";
+        if (this.settings.IsNoticeSync) {
+          new Notice(tmepfile.path + "\n" + "尝试同步..", 3000);
+        }
         res.json(result);
       } else {
         window.open("quicker:runaction:" + this.settings.double_chain_reference_actionId + "?manualSync");
@@ -917,6 +920,9 @@ export default class RequestHandler {
       if (mode) {
         this.lastSearchUidPath = persimd;
         result.path = "success";
+        if (this.settings.IsNoticeSync) {
+          new Notice(persimd + "\n" + "尝试同步..", 3000);
+        }
         res.json(result);
       } else {
         window.open("quicker:runaction:" + this.settings.double_chain_reference_actionId + "?manualSync");

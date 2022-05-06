@@ -36,6 +36,7 @@ export default class LocalRestApi extends Plugin {
     this.settings.SMQAdelimiter = configTxt.match(/SMQAdelimiter ?= ?(.+)/) == null ? DEFAULT_SETTINGS.SMQAdelimiter : configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];
     this.settings.titleInTimeout = configTxt.match(/titleInTimeout ?= ?(.+)/) == null ? DEFAULT_SETTINGS.titleInTimeout : parseInt(configTxt.match(/titleInTimeout ?= ?(.+)/)[1]);
     this.settings.O2SInputPath = configTxt.match(/O2SInputPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.O2SInputPath : (configTxt.match(/O2SInputPath ?= ?(.+)/)[1]).replace(vualtPath, "");
+    this.settings.autoUpdateSourceURL = configTxt.match(/autoUpdateSourceURL ?= ?(.+)/) == null ? DEFAULT_SETTINGS.autoUpdateSourceURL : (Boolean)(configTxt.match(/autoUpdateSourceURL ?= ?(.+)/)[1]);
     await this.saveData(this.settings);
 
 
@@ -177,9 +178,9 @@ export default class LocalRestApi extends Plugin {
     if (!SMEditProIsRunning) {
       //命令在quicker 动作 SMEditorPro 没有打开的情况下不能使用
       new Notice("Error,quicker SMEditorPro 动作没有执行，同步不能单独使用");
-    } else if (!(SMEleType === 'Item')) {//当前要同步的元素不是item
+    } else if (!(SMEleType === 'Item') || this.settings.autoUpdateSourceURL == false) {//当前要同步的元素不是item
       window.open("quicker:runaction:" + this.settings.double_chain_reference_actionId + "?manualSync");
-      new Notice("warning!,当前元素为非item类型，因此仅仅同步内容到SM，并没有生成md");
+      new Notice("warning!,当前元素为非item类型获取autoupdateSourceURL没有开启，因此仅仅同步内容到SM，并没有生成md");
 
     } else {
 
@@ -433,6 +434,20 @@ class LocalRestApiSettingTab extends PluginSettingTab {
         this.plugin.saveSettings();
       }).setValue(this.plugin.settings.qkIniPath));
 
+
+    new Setting(containerEl)
+      .setName("Notice Sync to Supermemo")
+      .setDesc(
+        "当同步时是否显示通知"
+      )
+      .addToggle((value) => {
+        value
+          .onChange((value) => {
+            this.plugin.settings.IsNoticeSync = value;
+            this.plugin.saveSettings();
+          })
+          .setValue(this.plugin.settings.IsNoticeSync);
+      });
     // new Setting(containerEl).setName("workpace md(temp md) path").addTextArea((cb) =>
     //   cb
     //     .onChange((value) => {
