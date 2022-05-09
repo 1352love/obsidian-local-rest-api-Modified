@@ -1,6 +1,6 @@
 import { ErrorCode, LocalRestApiSettings } from "./types";
 
-export const CERT_NAME = "obsidian-local-rest-api.crt";
+export const CERT_NAME = "quicker-ob-loacl-api.crt";
 
 export const HOSTNAME = "127.0.0.1";
 
@@ -21,7 +21,7 @@ export const DEFAULT_SETTINGS: LocalRestApiSettings = {
 };
 
 export const ERROR_CODE_MESSAGES: Record<ErrorCode, string> = {
-  [ErrorCode.ApiKeyAuthorizationRequired]: "Authorization required.  Find your API Key in the 'Local REST API' section of your Obsidian settings.",
+  [ErrorCode.ApiKeyAuthorizationRequired]: "Authorization required.  Find your API Key in the 'Quicker Sm Api' section of your Obsidian settings.",
   [ErrorCode.ContentTypeSpecificationRequired]: "Content-Type header required; this API accepts data in multiple content-types and you must indicate the content-type of your request body via the Content-Type header.",
   [ErrorCode.InvalidContentInsertionPositionValue]: "Invalid 'Content-Insertion-Position' header value.",
   [ErrorCode.InvalidContentForContentType]: "Your request body could not be processed as the content-type specified in your Content-Type header.",

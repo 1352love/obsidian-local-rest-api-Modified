@@ -86,7 +86,7 @@ export default class LocalRestApi extends Plugin {
       expiry.setDate(today.getDate() + 365);
 
       const keypair = forge.pki.rsa.generateKeyPair(2048);
-      const attrs = [{ name: "commonName", value: "Obsidian Local REST API" }];
+      const attrs = [{ name: "commonName", value: "Obsidian Quicker Sm Api" }];
       const certificate = forge.pki.createCertificate();
       certificate.setIssuer(attrs);
       certificate.setSubject(attrs);
@@ -299,7 +299,7 @@ class LocalRestApiSettingTab extends PluginSettingTab {
     const { containerEl } = this;
 
     containerEl.empty();
-    containerEl.classList.add("obsidian-local-rest-api-settings");
+    containerEl.classList.add("quicker-ob-loacl-api-settings");
 
     const apiKeyDiv = containerEl.createEl("div");
     apiKeyDiv.classList.add("api-key-display");
@@ -316,7 +316,7 @@ class LocalRestApiSettingTab extends PluginSettingTab {
 
     const seeMore = apiKeyDiv.createEl("p");
     seeMore.createEl("a", {
-      href: "https://coddingtonbear.github.io/obsidian-local-rest-api/",
+      href: "https://coddingtonbear.github.io/quicker-ob-loacl-api/",
       text: "See more information and examples in our interactive OpenAPI documentation.",
     });
 
@@ -379,7 +379,7 @@ class LocalRestApiSettingTab extends PluginSettingTab {
       text: "HTTPs Certificate Settings",
     });
     containerEl.createEl("p", {
-      text: `The following are your Local REST API's public key, certificate, and private key.  These are automatically generated the first time this plugin is loaded, but you can update them to use keys you have generated if you would like to do so.`,
+      text: `The following are your Quicker Sm Api's public key, certificate, and private key.  These are automatically generated the first time this plugin is loaded, but you can update them to use keys you have generated if you would like to do so.`,
     });
 
     new Setting(containerEl)

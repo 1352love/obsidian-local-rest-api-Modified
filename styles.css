@@ -1,9 +1,9 @@
 /* Sets all the text color to red! */
 
-div.obsidian-local-rest-api-settings div.api-key-display {
+div.quicker-ob-loacl-api-settings div.api-key-display {
   margin-bottom: 20px;
 }
-div.obsidian-local-rest-api-settings div.api-key-display pre {
+div.quicker-ob-loacl-api-settings div.api-key-display pre {
   font-size: 0.8em;
   padding: 10px 20px;
   background-color: var(--background-modifier-cover);
@@ -11,6 +11,6 @@ div.obsidian-local-rest-api-settings div.api-key-display pre {
   user-select: all;
 }
 
-div.obsidian-local-rest-api-settings textarea {
+div.quicker-ob-loacl-api-settings textarea {
   width: 100%;
 }

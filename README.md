@@ -1,6 +1,6 @@
-# Local REST API for Obsidian
+# Quicker Sm Api for Obsidian
 
-See our interactive docs: https://coddingtonbear.github.io/obsidian-local-rest-api/
+See our interactive docs: https://coddingtonbear.github.io/quicker-ob-loacl-api/
 
 Have you ever needed to automate interacting with your notes?  This plugin gives Obsidian a REST API you can interact with your notes from other tools so you can automate what you need to automate.
 
