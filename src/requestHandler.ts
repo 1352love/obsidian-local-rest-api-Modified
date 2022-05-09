@@ -827,7 +827,7 @@ export default class RequestHandler {
       let fileContents = "";
       let qalist = new Array(2).fill('');
 
-      let yaml_txt = "---\n" + uidFieldName + ": " + this.pad(editedEleID, 8) + "\n---\n";
+      let yaml_txt = "---\n" + uidFieldName + ": " + this.pad(editedEleID, 8) + "\n" + "preloadIframes: true\nenableLinks: true" + "\n" + "---\n";
 
 
       // const file = this.app.vault.getAbstractFileByPath(workspacetempmd) as TFile;

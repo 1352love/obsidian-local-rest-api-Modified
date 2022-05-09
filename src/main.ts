@@ -31,11 +31,12 @@ export default class LocalRestApi extends Plugin {
     let syncitem = this.addStatusBarItem();
     let configTxt: string = fs.readFileSync(this.settings.qkIniPath, { encoding: 'utf8' });
     let vualtPath = this.app.vault.adapter.basePath + "\\";
+    vualtPath = vualtPath.replace(/\\/g, "\\\\");
     this.settings.uidFieldName = configTxt.match(/mdUIDFieldName ?= ?(.+)/) == null ? DEFAULT_SETTINGS.uidFieldName : configTxt.match(/mdUIDFieldName ?= ?(.+)/)[1];
-    this.settings.toMdFolderPath = configTxt.match(/SM2OBFolderPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.toMdFolderPath : (configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1]).replace(vualtPath, "");
+    this.settings.toMdFolderPath = configTxt.match(/SM2OBFolderPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.toMdFolderPath : (configTxt.match(/SM2OBFolderPath ?= ?(.+)/)[1]).replace(new RegExp(String.raw`${vualtPath}`, 'i'), "");
     this.settings.SMQAdelimiter = configTxt.match(/SMQAdelimiter ?= ?(.+)/) == null ? DEFAULT_SETTINGS.SMQAdelimiter : configTxt.match(/SMQAdelimiter ?= ?(.+)/)[1];
     this.settings.titleInTimeout = configTxt.match(/titleInTimeout ?= ?(.+)/) == null ? DEFAULT_SETTINGS.titleInTimeout : parseInt(configTxt.match(/titleInTimeout ?= ?(.+)/)[1]);
-    this.settings.O2SInputPath = configTxt.match(/O2SInputPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.O2SInputPath : (configTxt.match(/O2SInputPath ?= ?(.+)/)[1]).replace(vualtPath, "");
+    this.settings.O2SInputPath = configTxt.match(/O2SInputPath ?= ?(.+)/) == null ? DEFAULT_SETTINGS.O2SInputPath : (configTxt.match(/O2SInputPath ?= ?(.+)/)[1]).replace(new RegExp(String.raw`${vualtPath}`, 'i'), "");
     this.settings.autoUpdateSourceURL = configTxt.match(/autoUpdateSourceURL ?= ?(.+)/) == null ? DEFAULT_SETTINGS.autoUpdateSourceURL : (Boolean)(configTxt.match(/autoUpdateSourceURL ?= ?(.+)/)[1]);
     await this.saveData(this.settings);
 
